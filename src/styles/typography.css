@@ -1,0 +1,100 @@
+/* ---------------------------------------------------------------------------
+ * Typography
+ *
+ * One block per type step, listed largest → smallest. Each block contains
+ * everything that defines that step's look — size, line-height, weight,
+ * color, wrapping — so you can point at one block and see the whole picture.
+ *
+ * Use semantic HTML first (<h1>, <h2>, <p>, <small>); reach for utility
+ * classes (.display, .body-lg, .body, .small) only when the visual weight
+ * needs to differ from the semantic level.
+ *
+ * Rules:
+ * - Don't hardcode font-size — use a token from tokens.css.
+ * - Don't add wght / wdth / slnt / opsz to font-variation-settings; let the
+ *   standard CSS properties drive them so utilities compose.
+ * ------------------------------------------------------------------------- */
+
+/* ----- Page-level setup ----- */
+
+html {
+  font-family: "Google Sans Flex", system-ui, sans-serif;
+  font-optical-sizing: auto;
+  font-variation-settings:
+    "GRAD" var(--axis-grad),
+    "ROND" var(--axis-rond);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ----- The type scale, largest to smallest -----
+ * Headings (display, h1–h6) use --color-text (primary).
+ * Body steps (body-lg, body, small) use --color-text-muted (secondary). */
+
+.display {
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  font-weight: 600;
+  color: var(--color-text);
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--fs-h1);
+  line-height: var(--lh-h1);
+  font-weight: 600;
+  color: var(--color-text);
+  text-wrap: balance;
+}
+
+h2 {
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: 600;
+  color: var(--color-text);
+  text-wrap: balance;
+}
+
+h3 {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: 600;
+  color: var(--color-text);
+  text-wrap: balance;
+}
+
+.body-lg {
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+  font-weight: 400;
+  color: var(--color-text-muted);
+  text-wrap: pretty;
+}
+
+body,
+.body {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 400;
+  color: var(--color-text-muted);
+  text-wrap: pretty;
+}
+
+small,
+.small {
+  font-size: var(--fs-small);
+  line-height: var(--lh-small);
+  font-weight: 400;
+  color: var(--color-text-muted);
+  text-wrap: pretty;
+}
+
+/* ----- h4–h6: same size as body, but bold and balanced like a heading. ----- */
+
+h4, h5, h6 {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 600;
+  color: var(--color-text);
+  text-wrap: balance;
+}

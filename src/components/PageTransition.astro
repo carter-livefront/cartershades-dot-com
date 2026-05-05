@@ -1,0 +1,25 @@
+<script>
+  const transitionWindow = window as typeof window & {
+    __pageTransitionReady?: boolean;
+  };
+
+  if (!transitionWindow.__pageTransitionReady) {
+    transitionWindow.__pageTransitionReady = true;
+
+    const enteringClass = "is-page-entering";
+
+    document.addEventListener("astro:before-swap", (event) => {
+      event.newDocument.body.classList.add(enteringClass);
+    });
+
+    document.addEventListener("astro:after-swap", () => {
+      requestAnimationFrame(() => {
+        document.body.classList.remove(enteringClass);
+      });
+    });
+
+    document.addEventListener("astro:page-load", () => {
+      document.body.classList.remove(enteringClass);
+    });
+  }
+</script>

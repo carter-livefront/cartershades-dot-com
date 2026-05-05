@@ -1,0 +1,47 @@
+---
+/**
+ * Two-column card grid that collapses to one column on phones.
+ * Children are <Card> components.
+ *
+ * Optional `title` renders a SectionTitle above the grid — common for
+ * "Selected work" / "Recent writing" sections.
+ *
+ * Layout breakpoint (≤640px) matches the bottom-nav rule. Sizing within
+ * cards remains fluid via the design tokens.
+ */
+import SectionTitle from "./SectionTitle.astro";
+
+interface Props {
+  title?: string;
+}
+
+const { title } = Astro.props;
+---
+
+<section class="container card-grid-section">
+  {title && <SectionTitle title={title} />}
+
+  <div class="card-grid">
+    <slot />
+  </div>
+</section>
+
+<style>
+  .card-grid-section {
+    display: grid;
+    gap: var(--space-sm);
+    padding-block: var(--space-lg);
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+  }
+
+  @media (max-width: 640px) {
+    .card-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

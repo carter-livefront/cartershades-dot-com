@@ -1,0 +1,46 @@
+---
+/**
+ * Temporary Coming Soon page — public face of the site while it's being built.
+ * Self-contained: no Header, Hero, or Footer. Only the design tokens (font,
+ * color, fluid type) come along via global.css.
+ *
+ * To revert when the real site launches:
+ *   1. Delete this file.
+ *   2. Rename src/pages/home.astro → src/pages/index.astro.
+ *   3. Restore the Home link in src/config/site.ts to href: "/".
+ */
+import "../styles/global.css";
+import { site } from "../config/site";
+
+const canonical = new URL("/", site.url).toString();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Coming Soon</title>
+    <link rel="canonical" href={canonical} />
+    <link
+      rel="preload"
+      href="/fonts/GoogleSansFlex.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+  </head>
+  <body class="coming-soon">
+    <h1 class="display">Coming Soon</h1>
+  </body>
+</html>
+
+<style>
+  .coming-soon {
+    display: grid;
+    place-items: center;
+    min-height: 100dvh;
+    padding: var(--space-md);
+  }
+</style>

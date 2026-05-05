@@ -1,0 +1,326 @@
+<div class="star-background" aria-hidden="true" transition:persist>
+  <canvas class="star-background__canvas" data-star-background></canvas>
+</div>
+
+<style>
+  .star-background {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100vh;
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      black 0%,
+      black 10%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      black 0%,
+      black 10%,
+      transparent 100%
+    );
+  }
+
+  .star-background__canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    color: var(--color-text-muted);
+  }
+</style>
+
+<script>
+  const canvas = document.querySelector<HTMLCanvasElement>(
+    "[data-star-background]"
+  );
+  const context = canvas?.getContext("2d");
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  if (canvas && context) {
+    const virtualWidth = 4096;
+    const virtualHeight = 1200;
+    const minOpacity = 0.15;
+    const maxOpacity = 0.6;
+    const cursorRadius = 300;
+    const cursorScale = 1.8;
+    const brightenSmoothing = 0.18;
+    const dimSmoothing = 0.04;
+    const growSmoothing = 0.18;
+    const shrinkSmoothing = 0.04;
+    const coloredStarChance = 0.3;
+    const popColorTokens = ["--color-pop-red", "--color-pop-blue", "--color-pop-yellow"];
+    let coloredStarColors: string[] = [];
+
+    const pointer = { x: 0, y: 0, active: false };
+    let stars: Array<{
+      x: number;
+      y: number;
+      screenX: number;
+      screenY: number;
+      radius: number;
+      shape: "circle" | "spark";
+      color: string | null;
+      colorIndex: number | null;
+      opacity: number;
+      targetOpacity: number;
+      scale: number;
+      targetScale: number;
+      phase: number;
+      speed: number;
+      twinkleStrength: number;
+    }> = [];
+    let width = 0;
+    let height = 0;
+    let scale = 1;
+    let offsetX = 0;
+    let offsetY = 0;
+    let animationFrame = 0;
+    let resizeFrame = 0;
+    let starColor = "currentColor";
+
+    const randomBetween = (min: number, max: number) =>
+      min + Math.random() * (max - min);
+
+    const easeOut = (value: number) => 1 - Math.pow(1 - value, 3);
+
+    const readStarColor = () => {
+      const styles = getComputedStyle(canvas);
+      starColor = styles.color;
+      coloredStarColors = popColorTokens.map((token) =>
+        styles.getPropertyValue(token).trim()
+      );
+    };
+
+    const refreshStarColors = () => {
+      readStarColor();
+      stars.forEach((star) => {
+        if (star.color !== null) {
+          const index = star.colorIndex ?? 0;
+          star.color = coloredStarColors[index] ?? null;
+        }
+      });
+    };
+
+    const getStarRadius = () => {
+      const type = Math.random();
+
+      if (type > 0.95) {
+        return randomBetween(1.35, 1.9);
+      }
+
+      if (type > 0.72) {
+        return randomBetween(0.85, 1.25);
+      }
+
+      return randomBetween(0.45, 0.8);
+    };
+
+    const getStarColorIndex = () => {
+      if (Math.random() > coloredStarChance) {
+        return null;
+      }
+
+      return Math.floor(Math.random() * popColorTokens.length);
+    };
+
+    const createStars = () => {
+      const starCount = Math.round((virtualWidth * virtualHeight) / 2500);
+
+      stars = Array.from({ length: starCount }, () => {
+        const colorIndex = getStarColorIndex();
+
+        return {
+        x: Math.random() * virtualWidth,
+        y: Math.random() * virtualHeight,
+        screenX: 0,
+        screenY: 0,
+        radius: getStarRadius(),
+        shape: Math.random() < 0.1 ? "spark" : "circle",
+        color: colorIndex === null ? null : coloredStarColors[colorIndex] ?? null,
+        colorIndex,
+        opacity: randomBetween(minOpacity, 0.16),
+        targetOpacity: randomBetween(minOpacity, 0.16),
+        scale: 1,
+        targetScale: 1,
+        phase: Math.random() * Math.PI * 2,
+        speed: (Math.PI * 2) / randomBetween(3000, 8000),
+        twinkleStrength: randomBetween(0.15, 0.6),
+        };
+      });
+    };
+
+    const updateViewportProjection = () => {
+      scale = Math.max(1, Math.min(width / virtualWidth, height / virtualHeight));
+      offsetX = (width - virtualWidth * scale) / 2;
+      offsetY = 0;
+
+      stars.forEach((star) => {
+        star.screenX = star.x * scale + offsetX;
+        star.screenY = star.y * scale + offsetY;
+      });
+    };
+
+    const resizeCanvas = () => {
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = Math.ceil(width * pixelRatio);
+      canvas.height = Math.ceil(height * pixelRatio);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      readStarColor();
+      updateViewportProjection();
+      draw(0);
+    };
+
+    const drawCircle = (star: (typeof stars)[number]) => {
+      context.beginPath();
+      context.arc(
+        star.screenX,
+        star.screenY,
+        star.radius * star.scale * scale,
+        0,
+        Math.PI * 2
+      );
+      context.fill();
+    };
+
+    const drawSpark = (star: (typeof stars)[number]) => {
+      const size = Math.max(1.8, star.radius * 1.7 * scale) * star.scale;
+      const lineWidth = Math.max(0.7, size * 0.3);
+
+      context.beginPath();
+      context.lineCap = "round";
+      context.lineWidth = lineWidth;
+      context.moveTo(star.screenX, star.screenY - size);
+      context.lineTo(star.screenX, star.screenY + size);
+      context.moveTo(star.screenX - size, star.screenY);
+      context.lineTo(star.screenX + size, star.screenY);
+      context.stroke();
+    };
+
+    const drawStar = (star: (typeof stars)[number]) => {
+      if (star.shape === "spark") {
+        drawSpark(star);
+        return;
+      }
+
+      drawCircle(star);
+    };
+
+    const getCursorInfluence = (star: (typeof stars)[number]) => {
+      if (!pointer.active) {
+        return 0;
+      }
+
+      const distance = Math.hypot(pointer.x - star.screenX, pointer.y - star.screenY);
+
+      if (distance >= cursorRadius) {
+        return 0;
+      }
+
+      return easeOut(1 - distance / cursorRadius);
+    };
+
+    const updateStarTargets = (time: number) => {
+      stars.forEach((star) => {
+        const pulse = Math.pow((Math.sin(time * star.speed + star.phase) + 1) / 2, 7);
+        const twinkleOpacity = Math.min(
+          maxOpacity,
+          minOpacity + pulse * star.twinkleStrength
+        );
+        const cursorInfluence = getCursorInfluence(star);
+
+        star.targetOpacity = Math.max(
+          twinkleOpacity,
+          minOpacity + (maxOpacity - minOpacity) * cursorInfluence
+        );
+        star.targetScale = 1 + (cursorScale - 1) * cursorInfluence;
+      });
+    };
+
+    const draw = (time: number) => {
+      context.clearRect(0, 0, width, height);
+
+      updateStarTargets(time);
+
+      stars.forEach((star) => {
+        const opacitySmoothing =
+          star.targetOpacity > star.opacity ? brightenSmoothing : dimSmoothing;
+        const scaleSmoothing =
+          star.targetScale > star.scale ? growSmoothing : shrinkSmoothing;
+
+        star.opacity += (star.targetOpacity - star.opacity) * opacitySmoothing;
+        star.scale += (star.targetScale - star.scale) * scaleSmoothing;
+
+        context.globalAlpha = star.opacity;
+        context.fillStyle = star.color ?? starColor;
+        context.strokeStyle = star.color ?? starColor;
+        drawStar(star);
+      });
+
+      context.globalAlpha = 1;
+    };
+
+    const animate = (time: number) => {
+      draw(time);
+      animationFrame = window.requestAnimationFrame(animate);
+    };
+
+    const requestResize = () => {
+      if (resizeFrame === 0) {
+        resizeFrame = window.requestAnimationFrame(() => {
+          resizeFrame = 0;
+          resizeCanvas();
+        });
+      }
+    };
+
+    window.addEventListener("pointermove", (event) => {
+      pointer.x = event.clientX;
+      pointer.y = event.clientY;
+      pointer.active = true;
+    });
+
+    document.documentElement.addEventListener("pointerleave", () => {
+      pointer.active = false;
+    });
+
+    window.addEventListener("resize", requestResize);
+
+    // Pop colors must be read before stars are created so each colored star
+    // gets a real value rather than the empty fallback.
+    readStarColor();
+    createStars();
+    resizeCanvas();
+
+    // Re-read tokens when the system theme flips so colored stars switch to
+    // the dark/light variant without needing a reload.
+    const colorScheme = window.matchMedia("(prefers-color-scheme: dark)");
+    colorScheme.addEventListener("change", refreshStarColors);
+
+    if (!reducedMotion.matches) {
+      animationFrame = window.requestAnimationFrame(animate);
+    }
+
+    reducedMotion.addEventListener("change", () => {
+      if (reducedMotion.matches) {
+        window.cancelAnimationFrame(animationFrame);
+        animationFrame = 0;
+        pointer.active = false;
+        draw(0);
+        return;
+      }
+
+      if (animationFrame === 0) {
+        animationFrame = window.requestAnimationFrame(animate);
+      }
+    });
+  }
+</script>

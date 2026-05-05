@@ -1,0 +1,71 @@
+---
+import Header from "../components/Header.astro";
+import Hero from "../components/Hero.astro";
+import Footer from "../components/Footer.astro";
+import StarBackground from "../components/StarBackground.astro";
+import PageTransition from "../components/PageTransition.astro";
+import { site } from "../config/site";
+import { ClientRouter } from "astro:transitions";
+import { getImage } from "astro:assets";
+import placeholder1 from "../assets/placeholder-1.jpg";
+import placeholder2 from "../assets/placeholder-2.jpg";
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description?: string;
+  heroTitle?: string | string[];
+}
+
+const { title, description = site.description, heroTitle = title } = Astro.props;
+const pageTitle = title === site.title ? title : `${title} — ${site.title}`;
+const canonical = new URL(Astro.url.pathname, site.url).toString();
+
+// Prefetch the first two Home card images from any non-Home page so that a
+// click into Home doesn't have to wait on JPEG decode. The browser will pick
+// these up as low-priority while the user is reading the current page, then
+// serve them from cache the moment Home swaps in.
+const isHome = Astro.url.pathname.startsWith("/home");
+const homeCardPrefetch = isHome
+  ? []
+  : await Promise.all(
+      [placeholder1, placeholder2].map((src) =>
+        getImage({ src, width: 1200 })
+      )
+    );
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link
+      rel="preload"
+      href="/fonts/GoogleSansFlex.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    {homeCardPrefetch.map((img) => (
+      <link rel="prefetch" as="image" href={img.src} />
+    ))}
+    <ClientRouter fallback="swap" />
+  </head>
+  <body>
+    <PageTransition />
+    <StarBackground />
+    <Header />
+    <div class="page-transition-content">
+      <Hero title={heroTitle} />
+      <main>
+        <slot />
+      </main>
+      <Footer />
+    </div>
+  </body>
+</html>

@@ -1,0 +1,131 @@
+/* ---------------------------------------------------------------------------
+ * Global styles entry point.
+ * Imports the rest of the design system. Keep this file thin.
+ * ------------------------------------------------------------------------- */
+
+@import "./fonts.css";
+@import "./tokens.css";
+@import "./typography.css";
+
+/* ----- Minimal reset ----- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  /* Reserve scrollbar space so the centered nav doesn't shift horizontally
+   * between pages that fit the viewport and pages that scroll. */
+  scrollbar-gutter: stable;
+}
+
+body {
+  margin: 0;
+  isolation: isolate;
+}
+
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* ----- Element color styles (Tier 2 only) ----- */
+
+body {
+  background: var(--color-bg);
+  /* Text color is set in typography.css alongside the body-text type rules. */
+}
+
+body > :not(.star-background) {
+  position: relative;
+  z-index: 1;
+}
+
+.page-transition-content {
+  opacity: 1;
+  transition:
+    opacity 260ms ease,
+    filter 260ms ease;
+}
+
+body.is-page-entering .page-transition-content {
+  opacity: 0;
+  filter: blur(4px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-transition-content {
+    transition: none;
+  }
+
+  body.is-page-entering .page-transition-content {
+    filter: none;
+  }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+/* On phones, the site header is fixed to the bottom (see Header.astro).
+ * Add bottom padding so page content isn't covered by the floating nav. */
+@media (max-width: 640px) {
+  body {
+    padding-bottom: calc(var(--space-xl) + env(safe-area-inset-bottom, 0));
+  }
+}
+
+a {
+  color: var(--color-link);
+}
+
+a:hover {
+  color: var(--color-link-hover);
+}
+
+a:active {
+  color: var(--color-link-active);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--color-selection-bg);
+  color: var(--color-selection-fg);
+}
+
+/* ----- Layout ----- */
+
+.container {
+  width: calc(100% - var(--container-gutter) - var(--container-gutter));
+  max-width: var(--container-max);
+  margin-inline: auto;
+}
+
+/* ----- Surfaces ----- */
+
+/* Frosted-glass utility. Requires content behind it to read as "glass" —
+ * works over scrolled content, hero images, gradients. Over a flat background
+ * it renders as a translucent canvas-tinted card with a hairline border.
+ * Theme-aware: tint and border follow --canvas / --ink. The highlight and
+ * shadow are fixed light/dark (they simulate physical light, not theme color). */
+.surface-glass {
+  background: oklch(from var(--canvas) l c h / 0.6);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid oklch(from var(--ink) l c h / 0.08);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.12),
+    0 12px 32px oklch(0 0 0 / 0.12);
+}

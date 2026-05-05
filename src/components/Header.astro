@@ -1,0 +1,36 @@
+---
+import Nav from "./Nav.astro";
+---
+
+<header class="site-header">
+  <Nav />
+</header>
+
+<style>
+  /* Default (desktop, >640px): sticky to the top so the nav stays visible as
+   * the page scrolls. The .surface-glass on the nav refracts scrolled content
+   * passing under it. */
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    padding-block: var(--space-sm);
+    padding-inline: var(--container-gutter);
+  }
+
+  /* On phones (≤640px), anchor the nav to the bottom of the viewport for
+   * thumb reachability instead. Body gets matching bottom padding (in
+   * global.css) so page content isn't covered. */
+  @media (max-width: 640px) {
+    .site-header {
+      position: fixed;
+      top: auto;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding-bottom: calc(var(--space-sm) + env(safe-area-inset-bottom, 0));
+    }
+  }
+</style>

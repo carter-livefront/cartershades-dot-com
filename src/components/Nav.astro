@@ -1,0 +1,79 @@
+---
+import { navLinks } from "../config/site";
+
+const { pathname } = Astro.url;
+const isActive = (href: string) =>
+  href === "/" ? pathname === "/" : pathname.startsWith(href);
+---
+
+<nav aria-label="Primary">
+  <ul class="surface-glass">
+    {
+      navLinks.map(({ label, href }) => {
+        const active = isActive(href);
+
+        return (
+          <li class:list={{ "is-active": active }}>
+            <a
+              href={href}
+              aria-current={active ? "page" : undefined}
+              data-astro-prefetch="load"
+            >
+              {label}
+            </a>
+          </li>
+        );
+      })
+    }
+  </ul>
+</nav>
+
+<style>
+  nav {
+    display: inline-flex;
+  }
+
+  ul {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 0;
+    padding: var(--space-2xs);
+    list-style: none;
+    border-radius: var(--radius-full);
+  }
+
+  li {
+    display: flex;
+    border-radius: var(--radius-full);
+  }
+
+  li.is-active {
+    background: var(--color-text);
+    color: var(--color-bg);
+  }
+
+  a {
+    display: flex;
+    align-items: center;
+    padding-block: var(--space-2xs);
+    padding-inline: var(--space-xs);
+    color: inherit;
+    font-size: var(--fs-body);
+    line-height: var(--lh-body);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  li:not(.is-active) {
+    color: var(--color-text);
+  }
+
+  a:hover {
+    color: var(--color-link-hover);
+  }
+
+  li.is-active a:hover {
+    color: inherit;
+  }
+</style>

@@ -1,0 +1,262 @@
+---
+interface Props {
+  title: string | string[];
+}
+
+const { title } = Astro.props;
+const titleLines = (Array.isArray(title) ? title : [title])
+  .map((line) => line.trim())
+  .filter(Boolean);
+const characterLines = titleLines.map((line) =>
+  line.split(/\s+/).map((word) => [...word])
+);
+const accessibleTitle = titleLines.join(" ");
+---
+
+<section class="hero">
+  <h1
+    class="container display hero-title"
+    data-hero-title-interactive
+    aria-label={accessibleTitle}
+  >
+    {
+      characterLines.map((line) => (
+        <span class="hero-title__line" aria-hidden="true">
+          {line.map((word) => (
+            <span class="hero-title__word">
+              {word.map((character) => (
+                <span class="hero-title__char">{character}</span>
+              ))}
+            </span>
+          ))}
+        </span>
+      ))
+    }
+  </h1>
+</section>
+
+<style>
+  .hero {
+    padding-block: var(--space-xl);
+    text-align: center;
+  }
+
+  .hero-title {
+    display: grid;
+    justify-items: center;
+    row-gap: 0;
+    margin-block: 0;
+    cursor: default;
+  }
+
+  .hero-title__line {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    column-gap: 0.28em;
+    max-width: 100%;
+    white-space: nowrap;
+  }
+
+  .hero-title__word {
+    display: inline-flex;
+    flex-shrink: 0;
+  }
+
+  .hero-title__char {
+    display: inline-block;
+    font-weight: var(--hero-char-weight, 600);
+    font-stretch: var(--hero-char-width, 100%);
+    will-change: font-weight, font-stretch;
+  }
+</style>
+
+<script>
+  const heroWindow = window as typeof window & {
+    __heroTitleReady?: boolean;
+  };
+
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  const setupHeroTitle = () => {
+    const titles = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-hero-title-interactive]")
+    );
+
+    if (titles.length === 0 || reducedMotion.matches) {
+      return;
+    }
+
+    const minWeight = 600;
+    const maxWeight = 800;
+    const minWidth = 100;
+    const maxWidth = 120;
+    const swellRadius = 280;
+    const smoothing = 0.18;
+
+    const sourceCharacters = titles.flatMap((title) =>
+      Array.from(title.querySelectorAll<HTMLElement>(".hero-title__char"))
+    );
+    const pointer = { x: 0, y: 0, active: false };
+    let characters: Array<{
+      element: HTMLElement;
+      restX: number;
+      restY: number;
+      currentWeight: number;
+      currentWidth: number;
+      targetWeight: number;
+      targetWidth: number;
+    }> = [];
+    let animationFrame = 0;
+    let measureFrame = 0;
+
+    const setCharacterState = (
+      character: HTMLElement,
+      weight: number,
+      width: number
+    ) => {
+      character.style.setProperty("--hero-char-weight", weight.toFixed(0));
+      character.style.setProperty("--hero-char-width", `${width.toFixed(2)}%`);
+    };
+
+    const calculateTarget = (character: (typeof characters)[number]) => {
+      if (!pointer.active) {
+        return { weight: minWeight, width: minWidth };
+      }
+
+      const distance = Math.hypot(
+        pointer.x - character.restX,
+        pointer.y - character.restY
+      );
+      const proximity = Math.max(0, 1 - distance / swellRadius);
+      const eased = proximity * proximity * (3 - 2 * proximity);
+
+      return {
+        weight: minWeight + (maxWeight - minWeight) * eased,
+        width: minWidth + (maxWidth - minWidth) * eased,
+      };
+    };
+
+    const updateTargets = () => {
+      characters.forEach((character) => {
+        const target = calculateTarget(character);
+        character.targetWeight = target.weight;
+        character.targetWidth = target.width;
+      });
+    };
+
+    const animateCharacters = () => {
+      let shouldContinue = false;
+
+      characters.forEach((character) => {
+        character.currentWeight +=
+          (character.targetWeight - character.currentWeight) * smoothing;
+        character.currentWidth +=
+          (character.targetWidth - character.currentWidth) * smoothing;
+
+        if (
+          Math.abs(character.targetWeight - character.currentWeight) > 0.5 ||
+          Math.abs(character.targetWidth - character.currentWidth) > 0.05
+        ) {
+          shouldContinue = true;
+        }
+
+        setCharacterState(
+          character.element,
+          character.currentWeight,
+          character.currentWidth
+        );
+      });
+
+      animationFrame = shouldContinue
+        ? window.requestAnimationFrame(animateCharacters)
+        : 0;
+    };
+
+    const requestAnimation = () => {
+      if (animationFrame === 0) {
+        animationFrame = window.requestAnimationFrame(animateCharacters);
+      }
+    };
+
+    const measureCharacters = () => {
+      sourceCharacters.forEach((character) => {
+        setCharacterState(character, minWeight, minWidth);
+      });
+
+      characters = sourceCharacters.map((element) => {
+        const rect = element.getBoundingClientRect();
+
+        return {
+          element,
+          restX: rect.left + window.scrollX + rect.width / 2,
+          restY: rect.top + window.scrollY + rect.height / 2,
+          currentWeight: minWeight,
+          currentWidth: minWidth,
+          targetWeight: minWeight,
+          targetWidth: minWidth,
+        };
+      });
+
+      updateTargets();
+      requestAnimation();
+    };
+
+    const requestMeasure = () => {
+      if (measureFrame === 0) {
+        measureFrame = window.requestAnimationFrame(() => {
+          measureFrame = 0;
+          measureCharacters();
+        });
+      }
+    };
+
+    window.addEventListener("pointermove", (event) => {
+      pointer.x = event.pageX;
+      pointer.y = event.pageY;
+      pointer.active = true;
+      updateTargets();
+      requestAnimation();
+    });
+
+    document.documentElement.addEventListener("pointerleave", () => {
+      pointer.active = false;
+      updateTargets();
+      requestAnimation();
+    });
+
+    window.addEventListener("resize", requestMeasure);
+
+    // Defer the first measurement off the critical path so the rest of the
+    // page (cards, images) can paint first. requestIdleCallback when
+    // available, setTimeout fallback for Safari.
+    const scheduleInitialMeasure = (cb: () => void) => {
+      const ric = (
+        window as typeof window & {
+          requestIdleCallback?: (
+            callback: () => void,
+            options?: { timeout: number }
+          ) => number;
+        }
+      ).requestIdleCallback;
+      if (typeof ric === "function") {
+        ric(cb, { timeout: 200 });
+      } else {
+        window.setTimeout(cb, 50);
+      }
+    };
+
+    scheduleInitialMeasure(requestMeasure);
+    document.fonts.ready.then(requestMeasure);
+  };
+
+  // Run once on the initial page load. With Astro's ClientRouter, the hero
+  // markup is replaced on every navigation, so re-run on `astro:page-load`
+  // (which fires both for the initial load and after each client-side swap).
+  if (!heroWindow.__heroTitleReady) {
+    heroWindow.__heroTitleReady = true;
+    document.addEventListener("astro:page-load", setupHeroTitle);
+  } else {
+    setupHeroTitle();
+  }
+</script>

@@ -1,0 +1,30 @@
+---
+import SectionTitle from "./SectionTitle.astro";
+
+interface Props {
+  title: string;
+  text?: string;
+}
+
+const { title, text } = Astro.props;
+---
+
+<section class="container text-layout">
+  <SectionTitle title={title} />
+  <p>
+    {text}
+    <slot />
+  </p>
+</section>
+
+<style>
+  .text-layout {
+    display: grid;
+    gap: var(--space-xs);
+    padding-block: var(--space-lg);
+  }
+
+  p {
+    margin: 0;
+  }
+</style>
