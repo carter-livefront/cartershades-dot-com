@@ -76,10 +76,10 @@
   );
 
   /* ----- Spacing scale: min / max in rem (1rem = 16px) ----- */
-  --space-2xs-min: 0.25rem; /* 4px */
+  --space-2xs-min: 0.5rem; /* 8px */
   --space-2xs-max: 0.5rem;  /* 8px */
 
-  --space-xs-min: 0.5rem;  /* 8px */
+  --space-xs-min: 0.75rem;  /* 12px */
   --space-xs-max: 1rem;   /* 16px */
 
   --space-sm-min: 1rem;     /* 16px */
