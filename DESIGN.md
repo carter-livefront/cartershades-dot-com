@@ -4,7 +4,7 @@ The instructions for how the site looks and how to extend it. If you're adding
 or changing visual style, this is the contract — follow it, don't invent next
 to it.
 
-## Font
+## Fonts
 
 **Google Sans Flex** — a single variable font file with six axes:
 
