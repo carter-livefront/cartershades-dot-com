@@ -39,6 +39,11 @@
   );
   const context = canvas?.getContext("2d");
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  // Match Card.astro: cursor-driven effects only on hover-capable devices
+  // above the mobile breakpoint. Twinkle animation still runs everywhere.
+  const interactiveMedia = window.matchMedia(
+    "(hover: hover) and (min-width: 641px)"
+  );
 
   if (canvas && context) {
     const virtualWidth = 4096;
@@ -282,14 +287,43 @@
       }
     };
 
-    window.addEventListener("pointermove", (event) => {
+    const handlePointerMove = (event: PointerEvent) => {
       pointer.x = event.clientX;
       pointer.y = event.clientY;
       pointer.active = true;
-    });
+    };
 
-    document.documentElement.addEventListener("pointerleave", () => {
+    const handlePointerLeave = () => {
       pointer.active = false;
+    };
+
+    const attachPointerListeners = () => {
+      window.addEventListener("pointermove", handlePointerMove);
+      document.documentElement.addEventListener(
+        "pointerleave",
+        handlePointerLeave
+      );
+    };
+
+    const detachPointerListeners = () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      document.documentElement.removeEventListener(
+        "pointerleave",
+        handlePointerLeave
+      );
+      pointer.active = false;
+    };
+
+    if (interactiveMedia.matches) {
+      attachPointerListeners();
+    }
+
+    interactiveMedia.addEventListener("change", () => {
+      if (interactiveMedia.matches) {
+        attachPointerListeners();
+      } else {
+        detachPointerListeners();
+      }
     });
 
     window.addEventListener("resize", requestResize);

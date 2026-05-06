@@ -77,13 +77,23 @@ const accessibleTitle = titleLines.join(" ");
   };
 
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  // Match the convention from Card.astro: cursor-driven effects only run on
+  // hover-capable devices above the mobile breakpoint. Touch input doesn't
+  // produce the kind of continuous pointer trail this effect is designed for.
+  const interactiveMedia = window.matchMedia(
+    "(hover: hover) and (min-width: 641px)"
+  );
 
   const setupHeroTitle = () => {
     const titles = Array.from(
       document.querySelectorAll<HTMLElement>("[data-hero-title-interactive]")
     );
 
-    if (titles.length === 0 || reducedMotion.matches) {
+    if (
+      titles.length === 0 ||
+      reducedMotion.matches ||
+      !interactiveMedia.matches
+    ) {
       return;
     }
 
