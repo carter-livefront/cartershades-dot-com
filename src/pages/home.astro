@@ -1,0 +1,58 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Text from "../components/Text.astro";
+import CardGrid from "../components/CardGrid.astro";
+import Card from "../components/Card.astro";
+import { site } from "../config/site";
+
+// Placeholder project images — replace with real assets in src/assets/.
+import placeholder1 from "../assets/placeholder-1.jpg";
+import placeholder2 from "../assets/placeholder-2.jpg";
+import placeholder3 from "../assets/placeholder-3.jpg";
+import placeholder4 from "../assets/placeholder-4.jpg";
+---
+
+<BaseLayout
+  title={site.title}
+  heroTitle={[
+    "Carter Shades",
+    "Product designer",
+  ]}
+>
+  <Text title="Now">
+    Designing for <a href="https://livefront.com/">Livefront</a>.
+  </Text>
+
+  <CardGrid title="Featured Work">
+    <Card
+      title="Project One"
+      subtitle="Short description of the project"
+      image={placeholder1}
+      imageAlt="Placeholder image"
+      href="/work/project-one"
+      priority
+    />
+    <Card
+      title="Project Two"
+      subtitle="Short description of the project"
+      image={placeholder2}
+      imageAlt="Placeholder image"
+      href="/work/project-two"
+      priority
+    />
+    <Card
+      title="Project Three"
+      subtitle="Short description of the project"
+      image={placeholder3}
+      imageAlt="Placeholder image"
+      href="/work/project-three"
+    />
+    <Card
+      title="Project Four"
+      subtitle="Short description of the project"
+      image={placeholder4}
+      imageAlt="Placeholder image"
+      href="/work/project-four"
+    />
+  </CardGrid>
+</BaseLayout>

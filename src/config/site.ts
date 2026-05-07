@@ -5,7 +5,7 @@ export const site = {
 } as const;
 
 export const navLinks = [
-  { label: "Home", href: "/" },
+  { label: "Home", href: "/home" },
   { label: "Work", href: "/work" },
   { label: "Writing", href: "/writing" },
   { label: "About", href: "/about" },
